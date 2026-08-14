@@ -128,16 +128,21 @@ h2 {
 
 .add-row {
   display: flex;
+  flex-direction: column;
   gap: 6px;
   margin-top: 8px;
 }
 
 .add-row .textbox {
-  flex: 1;
+  width: 100%;
 }
 
 .add-row .group-input {
-  flex: 0 0 110px;
+  width: 100%;
+}
+
+.add-row .btn {
+  align-self: flex-end;
 }
 
 .instruction-list {
@@ -159,11 +164,15 @@ h2 {
 .instruction-list li {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
   padding: 4px 6px;
   border-bottom: 1px solid #eceef0;
   font-size: 12px;
+}
+
+.instruction-list li span {
+  white-space: pre-line;
 }
 
 .instruction-list li:last-child {
