@@ -6,6 +6,7 @@ let instructions = [];
 const fileStatusEl = document.getElementById("file-status");
 const openFileBtn = document.getElementById("open-file-btn");
 const createFileBtn = document.getElementById("create-file-btn");
+const newInstructionGroupInput = document.getElementById("new-instruction-group");
 const newInstructionInput = document.getElementById("new-instruction-input");
 const addInstructionBtn = document.getElementById("add-instruction-btn");
 const instructionListEl = document.getElementById("instruction-list");
@@ -19,18 +20,37 @@ const JSON_FILE_TYPES = [
 
 function renderInstructions() {
   instructionListEl.innerHTML = "";
-  instructions.forEach((text, index) => {
-    const li = document.createElement("li");
-    const span = document.createElement("span");
-    span.textContent = text;
-    const removeBtn = document.createElement("button");
-    removeBtn.type = "button";
-    removeBtn.textContent = "削除";
-    removeBtn.addEventListener("click", () => removeInstruction(index));
-    li.appendChild(span);
-    li.appendChild(removeBtn);
-    instructionListEl.appendChild(li);
+
+  const groupOrder = [];
+  const groupedItems = new Map();
+  instructions.forEach((item, index) => {
+    const key = item.group || "";
+    if (!groupedItems.has(key)) {
+      groupedItems.set(key, []);
+      groupOrder.push(key);
+    }
+    groupedItems.get(key).push({ ...item, index });
   });
+
+  for (const key of groupOrder) {
+    const header = document.createElement("li");
+    header.className = "group-header";
+    header.textContent = key || CUSTOM_INSTRUCTIONS_UNGROUPED_LABEL;
+    instructionListEl.appendChild(header);
+
+    for (const item of groupedItems.get(key)) {
+      const li = document.createElement("li");
+      const span = document.createElement("span");
+      span.textContent = item.text;
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.textContent = "削除";
+      removeBtn.addEventListener("click", () => removeInstruction(item.index));
+      li.appendChild(span);
+      li.appendChild(removeBtn);
+      instructionListEl.appendChild(li);
+    }
+  }
 }
 
 async function writeInstructions() {
@@ -113,9 +133,11 @@ createFileBtn.addEventListener("click", async () => {
 addInstructionBtn.addEventListener("click", async () => {
   const text = newInstructionInput.value.trim();
   if (!text || !fileHandle) return;
-  instructions.push(text);
+  const group = newInstructionGroupInput.value.trim();
+  instructions.push({ group, text });
   renderInstructions();
   newInstructionInput.value = "";
+  newInstructionGroupInput.value = "";
   await writeInstructions();
 });
 

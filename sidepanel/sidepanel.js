@@ -44,20 +44,45 @@ let instructions = [];
 function renderInstructions() {
   const previousValue = customInstructionSelect.value;
   customInstructionSelect.innerHTML = "";
+
   if (instructions.length === 0) {
     const option = document.createElement("option");
     option.value = "";
     option.textContent = "(登録なし)";
     customInstructionSelect.appendChild(option);
   } else {
-    for (const text of instructions) {
-      const option = document.createElement("option");
-      option.value = text;
-      option.textContent = text;
-      customInstructionSelect.appendChild(option);
+    const groupOrder = [];
+    const groupedItems = new Map();
+    for (const item of instructions) {
+      const key = item.group || "";
+      if (!groupedItems.has(key)) {
+        groupedItems.set(key, []);
+        groupOrder.push(key);
+      }
+      groupedItems.get(key).push(item);
+    }
+    // グループ指定が1つもない場合は従来通りフラットなリストのまま表示する
+    const useGroups = groupOrder.length > 1 || groupOrder[0] !== "";
+
+    for (const key of groupOrder) {
+      const container = useGroups ? document.createElement("optgroup") : customInstructionSelect;
+      if (useGroups) {
+        container.label = key || CUSTOM_INSTRUCTIONS_UNGROUPED_LABEL;
+      }
+      for (const item of groupedItems.get(key)) {
+        const option = document.createElement("option");
+        option.value = item.text;
+        option.textContent = item.text;
+        container.appendChild(option);
+      }
+      if (useGroups) {
+        customInstructionSelect.appendChild(container);
+      }
     }
   }
-  if (instructions.includes(previousValue)) {
+
+  const values = instructions.map((item) => item.text);
+  if (values.includes(previousValue)) {
     customInstructionSelect.value = previousValue;
   }
 }

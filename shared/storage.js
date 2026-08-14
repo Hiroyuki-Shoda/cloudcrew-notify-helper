@@ -4,6 +4,18 @@ const CUSTOM_INSTRUCTIONS_DB_NAME = "slack-helper-db";
 const CUSTOM_INSTRUCTIONS_STORE_NAME = "handles";
 const CUSTOM_INSTRUCTIONS_HANDLE_KEY = "custom-instructions-file";
 const CUSTOM_INSTRUCTIONS_UPDATED_MESSAGE = "custom-instructions-updated";
+const CUSTOM_INSTRUCTIONS_UNGROUPED_LABEL = "未分類";
+
+// 旧形式（文字列の配列）との互換用。文字列は「グループなし」として扱う。
+function normalizeCustomInstructionEntry(entry) {
+  if (typeof entry === "string") {
+    return { group: "", text: entry };
+  }
+  if (entry && typeof entry === "object" && typeof entry.text === "string") {
+    return { group: typeof entry.group === "string" ? entry.group : "", text: entry.text };
+  }
+  return null;
+}
 
 function openCustomInstructionsDb() {
   return new Promise((resolve, reject) => {
@@ -42,7 +54,8 @@ async function readCustomInstructionsFromFile(handle) {
     const text = await file.text();
     if (!text.trim()) return [];
     const parsed = JSON.parse(text);
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map(normalizeCustomInstructionEntry).filter(Boolean);
   } catch (error) {
     console.error("個別指示ファイルの読み込みに失敗しました", error);
     return [];
