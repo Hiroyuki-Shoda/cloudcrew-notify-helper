@@ -60,19 +60,7 @@
       <select id="custom-instruction-select" class="textbox" disabled>
         <option value="">(登録なし)</option>
       </select>
-
-      <div class="custom-instruction-manager">
-        <button id="open-file-btn" class="btn btn-outline" type="button">既存ファイルを開く</button>
-        <button id="create-file-btn" class="btn btn-outline" type="button">新規ファイルを作成</button>
-        <span id="file-status" class="file-status">未接続</span>
-
-        <div class="add-row">
-          <input type="text" id="new-instruction-input" class="textbox" placeholder="新しい個別指示を追加" />
-          <button id="add-instruction-btn" class="btn btn-outline" type="button">追加</button>
-        </div>
-
-        <ul id="instruction-list" class="instruction-list"></ul>
-      </div>
+      <button id="open-settings-btn" class="btn btn-outline" type="button">個別指示を管理</button>
     </div>
 
     <button id="generate-message-btn" class="btn btn-green">メッセージ作成</button>
@@ -85,6 +73,7 @@
     <button id="copy-result-btn" class="btn btn-blue">上記の内容をコピー</button>
   </section>
 
+  <script src="../shared/storage.js"></script>
   <script src="sidepanel.js"></script>
 </body>
 </html>

@@ -1,0 +1,13 @@
+body {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.settings-intro {
+  margin: 0 0 12px;
+  color: #555;
+}
+
+.custom-instruction-manager {
+  margin-top: 0;
+}

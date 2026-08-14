@@ -1,23 +1,11 @@
 "use strict";
 
-const DB_NAME = "slack-helper-db";
-const STORE_NAME = "handles";
-const HANDLE_KEY = "custom-instructions-file";
-
-let fileHandle = null;
-let instructions = [];
-
 const mentionTextEl = document.getElementById("mention-text");
 const copyMentionBtn = document.getElementById("copy-mention-btn");
 
 const targetHostEl = document.getElementById("target-host");
 const customInstructionSelect = document.getElementById("custom-instruction-select");
-const fileStatusEl = document.getElementById("file-status");
-const openFileBtn = document.getElementById("open-file-btn");
-const createFileBtn = document.getElementById("create-file-btn");
-const newInstructionInput = document.getElementById("new-instruction-input");
-const addInstructionBtn = document.getElementById("add-instruction-btn");
-const instructionListEl = document.getElementById("instruction-list");
+const openSettingsBtn = document.getElementById("open-settings-btn");
 const generateMessageBtn = document.getElementById("generate-message-btn");
 const resultMessageEl = document.getElementById("result-message");
 const copyResultBtn = document.getElementById("copy-result-btn");
@@ -49,40 +37,12 @@ function updateCustomInstructionEnabled() {
 
 document.getElementById("result-type-group").addEventListener("change", updateCustomInstructionEnabled);
 
-// ---------- ⑦ 個別指示の永続化 (File System Access API + IndexedDB) ----------
+// ---------- ⑦ 個別指示プルダウンの読み込み（管理は設定画面で行う） ----------
 
-function openDb() {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, 1);
-    request.onupgradeneeded = () => {
-      request.result.createObjectStore(STORE_NAME);
-    };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-}
-
-async function saveHandleToDb(handle) {
-  const db = await openDb();
-  await new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, "readwrite");
-    tx.objectStore(STORE_NAME).put(handle, HANDLE_KEY);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
-}
-
-async function loadHandleFromDb() {
-  const db = await openDb();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, "readonly");
-    const request = tx.objectStore(STORE_NAME).get(HANDLE_KEY);
-    request.onsuccess = () => resolve(request.result || null);
-    request.onerror = () => reject(request.error);
-  });
-}
+let instructions = [];
 
 function renderInstructions() {
+  const previousValue = customInstructionSelect.value;
   customInstructionSelect.innerHTML = "";
   if (instructions.length === 0) {
     const option = document.createElement("option");
@@ -97,131 +57,40 @@ function renderInstructions() {
       customInstructionSelect.appendChild(option);
     }
   }
-
-  instructionListEl.innerHTML = "";
-  instructions.forEach((text, index) => {
-    const li = document.createElement("li");
-    const span = document.createElement("span");
-    span.textContent = text;
-    const removeBtn = document.createElement("button");
-    removeBtn.type = "button";
-    removeBtn.textContent = "削除";
-    removeBtn.addEventListener("click", () => removeInstruction(index));
-    li.appendChild(span);
-    li.appendChild(removeBtn);
-    instructionListEl.appendChild(li);
-  });
+  if (instructions.includes(previousValue)) {
+    customInstructionSelect.value = previousValue;
+  }
 }
 
-async function readInstructionsFromFile(handle) {
+async function refreshInstructionsFromFile() {
   try {
-    const file = await handle.getFile();
-    const text = await file.text();
-    if (!text.trim()) return [];
-    const parsed = JSON.parse(text);
-    return Array.isArray(parsed) ? parsed : [];
+    const handle = await loadCustomInstructionsHandle();
+    if (!handle) {
+      instructions = [];
+      renderInstructions();
+      return;
+    }
+    const permission = await handle.queryPermission({ mode: "read" });
+    if (permission === "granted") {
+      instructions = await readCustomInstructionsFromFile(handle);
+    } else {
+      instructions = [];
+    }
+    renderInstructions();
   } catch (error) {
     console.error("個別指示ファイルの読み込みに失敗しました", error);
-    return [];
   }
 }
 
-async function writeInstructionsToFile() {
-  if (!fileHandle) return;
-  const writable = await fileHandle.createWritable();
-  await writable.write(JSON.stringify(instructions, null, 2));
-  await writable.close();
-}
-
-async function connectFileHandle(handle, { persist } = { persist: true }) {
-  fileHandle = handle;
-  instructions = await readInstructionsFromFile(handle);
-  renderInstructions();
-  fileStatusEl.textContent = `接続済み: ${handle.name}`;
-  if (persist) {
-    await saveHandleToDb(handle);
-  }
-}
-
-async function tryRestoreFileHandle() {
-  try {
-    const handle = await loadHandleFromDb();
-    if (!handle) {
-      fileStatusEl.textContent = "未接続";
-      return;
-    }
-    const permission = await handle.queryPermission({ mode: "readwrite" });
-    if (permission === "granted") {
-      await connectFileHandle(handle, { persist: false });
-    } else {
-      fileStatusEl.textContent = `再接続が必要です（${handle.name}）`;
-    }
-  } catch (error) {
-    console.error("個別指示ファイルの復元に失敗しました", error);
-    fileStatusEl.textContent = "未接続";
-  }
-}
-
-const JSON_FILE_TYPES = [
-  {
-    description: "JSON",
-    accept: { "application/json": [".json"] },
-  },
-];
-
-openFileBtn.addEventListener("click", async () => {
-  try {
-    const [handle] = await window.showOpenFilePicker({
-      multiple: false,
-      types: JSON_FILE_TYPES,
-    });
-    const permission = await handle.requestPermission({ mode: "readwrite" });
-    if (permission !== "granted") {
-      fileStatusEl.textContent = "書き込み権限が許可されませんでした";
-      return;
-    }
-    // 既存ファイルを開くだけなので内容は読み込み専用で扱い、上書きしない
-    await connectFileHandle(handle, { persist: true });
-  } catch (error) {
-    if (error.name !== "AbortError") {
-      console.error("ファイル選択に失敗しました", error);
-    }
-  }
+openSettingsBtn.addEventListener("click", () => {
+  chrome.tabs.create({ url: chrome.runtime.getURL("settings/settings.html") });
 });
 
-createFileBtn.addEventListener("click", async () => {
-  try {
-    const handle = await window.showSaveFilePicker({
-      suggestedName: "custom-instructions.json",
-      types: JSON_FILE_TYPES,
-    });
-    fileHandle = handle;
-    instructions = [];
-    await writeInstructionsToFile();
-    renderInstructions();
-    fileStatusEl.textContent = `接続済み: ${handle.name}`;
-    await saveHandleToDb(handle);
-  } catch (error) {
-    if (error.name !== "AbortError") {
-      console.error("新規ファイルの作成に失敗しました", error);
-    }
+chrome.runtime.onMessage.addListener((message) => {
+  if (message && message.type === CUSTOM_INSTRUCTIONS_UPDATED_MESSAGE) {
+    refreshInstructionsFromFile();
   }
 });
-
-addInstructionBtn.addEventListener("click", async () => {
-  const text = newInstructionInput.value.trim();
-  if (!text || !fileHandle) return;
-  instructions.push(text);
-  renderInstructions();
-  newInstructionInput.value = "";
-  await writeInstructionsToFile();
-});
-
-async function removeInstruction(index) {
-  instructions.splice(index, 1);
-  renderInstructions();
-  await writeInstructionsToFile();
-}
 
 // ---------- ⑧ メッセージ作成ロジック ----------
 
@@ -282,4 +151,4 @@ copyResultBtn.addEventListener("click", async () => {
 
 updateMentionText();
 updateCustomInstructionEnabled();
-tryRestoreFileHandle();
+refreshInstructionsFromFile();
