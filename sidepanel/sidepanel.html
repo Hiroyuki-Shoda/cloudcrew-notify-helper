@@ -12,7 +12,7 @@
     <h2>初動対応</h2>
 
     <div class="field">
-      <span class="field-label">① メンション</span>
+      <span class="field-label">メンション</span>
       <div class="radio-group" id="mention-type-group">
         <label><input type="radio" name="mention-type" value="@here" checked /> @here</label>
         <label><input type="radio" name="mention-type" value="@channel" /> @channel</label>
@@ -20,7 +20,7 @@
     </div>
 
     <div class="field">
-      <span class="field-label">② メッセージ内容</span>
+      <span class="field-label">メッセージ内容</span>
       <textarea id="mention-text" class="textbox" rows="3" readonly></textarea>
     </div>
 
@@ -31,12 +31,12 @@
     <h2>一次対応結果</h2>
 
     <div class="field">
-      <span class="field-label">④ 対象ドメインもしくはホスト名</span>
+      <span class="field-label">対象ドメインもしくはホスト名</span>
       <input type="text" id="target-host" class="textbox" />
     </div>
 
     <div class="field">
-      <span class="field-label">⑤ 確認箇所</span>
+      <span class="field-label">確認箇所</span>
       <div class="radio-group" id="check-item-group">
         <label><input type="radio" name="check-item" value="WEB表示" checked /> WEB表示</label>
         <label><input type="radio" name="check-item" value="リモートデスクトップ接続" /> リモートデスクトップ接続</label>
@@ -46,7 +46,7 @@
     </div>
 
     <div class="field">
-      <span class="field-label">⑥ 動作結果</span>
+      <span class="field-label">動作結果</span>
       <div class="radio-group" id="result-type-group">
         <label><input type="radio" name="result-type" value="問題なし" checked /> 問題なし</label>
         <label><input type="radio" name="result-type" value="電話エスカ" /> 電話エスカ</label>
@@ -56,7 +56,7 @@
     </div>
 
     <div class="field">
-      <span class="field-label">⑦ 個別指示メッセージ</span>
+      <span class="field-label">個別指示メッセージ</span>
       <select id="custom-instruction-select" class="textbox" disabled>
         <option value="">(登録なし)</option>
       </select>
@@ -77,7 +77,7 @@
     <button id="generate-message-btn" class="btn btn-green">メッセージ作成</button>
 
     <div class="field">
-      <span class="field-label">⑨ 生成メッセージ（編集可能）</span>
+      <span class="field-label">生成メッセージ（編集可能）</span>
       <textarea id="result-message" class="textbox" rows="5"></textarea>
     </div>
 

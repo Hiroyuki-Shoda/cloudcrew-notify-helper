@@ -209,7 +209,7 @@ function buildMessage({ resultType, checkItem, targetHost, customInstruction }) 
       return `${checkItem}問題ございません。`;
     }
     if (checkItem === "リモートデスクトップ接続") {
-      return `${host}へのリモートデスクトップ接続問題ございません。`;
+      return host ? `${host}へのリモートデスクトップ接続問題ございません。` : "リモートデスクトップ接続問題ございません。";
     }
     if (checkItem === "5分待機") {
       return host ? `${host}への接続が行えないため、5分待機いたします。` : "5分待機いたします。";
@@ -217,6 +217,9 @@ function buildMessage({ resultType, checkItem, targetHost, customInstruction }) 
   }
 
   if (resultType === "電話エスカ") {
+    if (checkItem === "5分待機") {
+      return "5分経過後も復旧しないため、電話エスカレーションいたします。";
+    }
     const target = host ? `${checkItem}(${host})` : checkItem;
     return `${target}に問題が出ておりますため、電話エスカレーションいたします。`;
   }
