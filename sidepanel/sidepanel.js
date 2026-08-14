@@ -12,8 +12,9 @@ const copyMentionBtn = document.getElementById("copy-mention-btn");
 
 const targetHostEl = document.getElementById("target-host");
 const customInstructionSelect = document.getElementById("custom-instruction-select");
-const chooseFileBtn = document.getElementById("choose-file-btn");
 const fileStatusEl = document.getElementById("file-status");
+const openFileBtn = document.getElementById("open-file-btn");
+const createFileBtn = document.getElementById("create-file-btn");
 const newInstructionInput = document.getElementById("new-instruction-input");
 const addInstructionBtn = document.getElementById("add-instruction-btn");
 const instructionListEl = document.getElementById("instruction-list");
@@ -161,21 +162,48 @@ async function tryRestoreFileHandle() {
   }
 }
 
-chooseFileBtn.addEventListener("click", async () => {
+const JSON_FILE_TYPES = [
+  {
+    description: "JSON",
+    accept: { "application/json": [".json"] },
+  },
+];
+
+openFileBtn.addEventListener("click", async () => {
   try {
-    const handle = await window.showSaveFilePicker({
-      suggestedName: "custom-instructions.json",
-      types: [
-        {
-          description: "JSON",
-          accept: { "application/json": [".json"] },
-        },
-      ],
+    const [handle] = await window.showOpenFilePicker({
+      multiple: false,
+      types: JSON_FILE_TYPES,
     });
-    await connectFileHandle(handle);
+    const permission = await handle.requestPermission({ mode: "readwrite" });
+    if (permission !== "granted") {
+      fileStatusEl.textContent = "書き込み権限が許可されませんでした";
+      return;
+    }
+    // 既存ファイルを開くだけなので内容は読み込み専用で扱い、上書きしない
+    await connectFileHandle(handle, { persist: true });
   } catch (error) {
     if (error.name !== "AbortError") {
       console.error("ファイル選択に失敗しました", error);
+    }
+  }
+});
+
+createFileBtn.addEventListener("click", async () => {
+  try {
+    const handle = await window.showSaveFilePicker({
+      suggestedName: "custom-instructions.json",
+      types: JSON_FILE_TYPES,
+    });
+    fileHandle = handle;
+    instructions = [];
+    await writeInstructionsToFile();
+    renderInstructions();
+    fileStatusEl.textContent = `接続済み: ${handle.name}`;
+    await saveHandleToDb(handle);
+  } catch (error) {
+    if (error.name !== "AbortError") {
+      console.error("新規ファイルの作成に失敗しました", error);
     }
   }
 });
