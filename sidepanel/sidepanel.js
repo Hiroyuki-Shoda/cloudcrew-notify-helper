@@ -37,6 +37,24 @@ function updateCustomInstructionEnabled() {
 
 document.getElementById("result-type-group").addEventListener("change", updateCustomInstructionEnabled);
 
+// ---------- ⑤ → ⑥「メールエスカ」の有効化制御 ----------
+
+function updateMailEscalationAvailability() {
+  const checkItem = getSelectedRadioValue("check-item");
+  const mailEscalationRadio = document.querySelector('input[name="result-type"][value="メールエスカ"]');
+  const shouldDisable = checkItem !== "5分待機";
+
+  mailEscalationRadio.disabled = shouldDisable;
+
+  if (shouldDisable && mailEscalationRadio.checked) {
+    mailEscalationRadio.checked = false;
+    document.querySelector('input[name="result-type"][value="問題なし"]').checked = true;
+    updateCustomInstructionEnabled();
+  }
+}
+
+document.getElementById("check-item-group").addEventListener("change", updateMailEscalationAvailability);
+
 // ---------- ⑦ 個別指示プルダウンの読み込み（管理は設定画面で行う） ----------
 
 let instructions = [];
@@ -126,32 +144,41 @@ function buildMessage({ resultType, checkItem, targetHost, customInstruction }) 
     return customInstruction || "";
   }
 
-  if (resultType === "問題なし") {
-    if (checkItem === "WEB表示" || checkItem === "サービス稼働") {
-      return `${checkItem}問題ございません。`;
+  if (checkItem === "WEB表示") {
+    if (resultType === "問題なし") {
+      return host ? `${host}のWEB表示問題ございません。` : "WEB表示問題ございません。";
     }
-    if (checkItem === "リモートデスクトップ接続") {
+    if (resultType === "電話エスカ") {
+      return host
+        ? `${host}のWEB表示に問題が発生しておりますため、電話エスカレーションいたします。`
+        : "WEB表示に問題が発生しておりますため、電話エスカレーションいたします。";
+    }
+    return "";
+  }
+
+  if (checkItem === "リモートデスクトップ接続") {
+    if (resultType === "問題なし") {
       return host ? `${host}へのリモートデスクトップ接続問題ございません。` : "リモートデスクトップ接続問題ございません。";
     }
-    if (checkItem === "5分待機") {
-      return host ? `${host}への接続が行えないため、5分待機いたします。` : "5分待機いたします。";
+    if (resultType === "電話エスカ") {
+      return host
+        ? `${host}へのリモートデスクトップ接続が行えないため、電話エスカレーションいたします。`
+        : "リモートデスクトップ接続が行えないため、電話エスカレーションいたします。";
     }
+    return "";
   }
 
-  if (resultType === "電話エスカ") {
-    if (checkItem === "5分待機") {
+  if (checkItem === "5分待機") {
+    if (resultType === "問題なし") {
+      return "5分待機いたします。";
+    }
+    if (resultType === "電話エスカ") {
       return "5分経過後も復旧しないため、電話エスカレーションいたします。";
     }
-    const target = host ? `${checkItem}(${host})` : checkItem;
-    return `${target}に問題が出ておりますため、電話エスカレーションいたします。`;
-  }
-
-  if (resultType === "メールエスカ") {
-    if (checkItem === "5分待機") {
+    if (resultType === "メールエスカ") {
       return "5分経過後も復旧しないため、メールエスカレーションいたします。";
     }
-    const target = host ? `${checkItem}(${host})` : checkItem;
-    return `${target}に問題が出ておりますため、メールエスカレーションいたします。`;
+    return "";
   }
 
   return "";
@@ -176,4 +203,5 @@ copyResultBtn.addEventListener("click", async () => {
 
 updateMentionText();
 updateCustomInstructionEnabled();
+updateMailEscalationAvailability();
 refreshInstructionsFromFile();
