@@ -3,7 +3,7 @@
   "name": "Slackメッセージ作成ヘルパー",
   "version": "1.0.0",
   "description": "初動対応・一次対応結果のSlack報告メッセージをサイドパネルから作成します。",
-  "permissions": ["sidePanel"],
+  "permissions": ["sidePanel", "contextMenus", "storage"],
   "action": {
     "default_title": "Slackメッセージ作成ヘルパー"
   },

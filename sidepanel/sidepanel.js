@@ -3,6 +3,10 @@
 const mentionTextEl = document.getElementById("mention-text");
 const copyMentionBtn = document.getElementById("copy-mention-btn");
 
+const webCheckUrlsEl = document.getElementById("web-check-urls");
+const webCheckStatusEl = document.getElementById("web-check-status");
+const openWebUrlsBtn = document.getElementById("open-web-urls-btn");
+
 const targetHostEl = document.getElementById("target-host");
 const customInstructionSelect = document.getElementById("custom-instruction-select");
 const openSettingsBtn = document.getElementById("open-settings-btn");
@@ -26,6 +30,56 @@ document.getElementById("mention-type-group").addEventListener("change", updateM
 
 copyMentionBtn.addEventListener("click", async () => {
   await navigator.clipboard.writeText(mentionTextEl.value);
+});
+
+// ---------- WEB表示確認 ----------
+
+const PENDING_WEB_CHECK_URLS_KEY = "pendingWebCheckUrls";
+
+function isValidHttpUrl(text) {
+  try {
+    const url = new URL(text);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function appendUrlsToWebCheck(urls) {
+  const existingLines = webCheckUrlsEl.value.split("\n").filter((line) => line.trim().length > 0);
+  webCheckUrlsEl.value = [...existingLines, ...urls].join("\n");
+}
+
+async function importPendingWebCheckUrls() {
+  const stored = await chrome.storage.local.get(PENDING_WEB_CHECK_URLS_KEY);
+  const pending = stored[PENDING_WEB_CHECK_URLS_KEY] || [];
+  if (pending.length === 0) return;
+  appendUrlsToWebCheck(pending);
+  await chrome.storage.local.remove(PENDING_WEB_CHECK_URLS_KEY);
+}
+
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName === "local" && changes[PENDING_WEB_CHECK_URLS_KEY]) {
+    importPendingWebCheckUrls();
+  }
+});
+
+openWebUrlsBtn.addEventListener("click", () => {
+  const lines = webCheckUrlsEl.value
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+  let hasInvalid = false;
+  for (const line of lines) {
+    if (isValidHttpUrl(line)) {
+      window.open(line, "_blank");
+    } else {
+      hasInvalid = true;
+    }
+  }
+
+  webCheckStatusEl.textContent = hasInvalid ? "URL形式が不正です" : "";
 });
 
 // ---------- ⑤⑥ → ⑦ 有効化制御 ----------
@@ -205,3 +259,4 @@ updateMentionText();
 updateCustomInstructionEnabled();
 updateMailEscalationAvailability();
 refreshInstructionsFromFile();
+importPendingWebCheckUrls();
