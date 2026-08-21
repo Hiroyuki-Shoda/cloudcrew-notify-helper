@@ -51,6 +51,7 @@ function appendUrlsToWebCheck(urls) {
 }
 
 async function importPendingWebCheckUrls() {
+  if (!chrome.storage) return;
   const stored = await chrome.storage.local.get(PENDING_WEB_CHECK_URLS_KEY);
   const pending = stored[PENDING_WEB_CHECK_URLS_KEY] || [];
   if (pending.length === 0) return;
@@ -58,11 +59,17 @@ async function importPendingWebCheckUrls() {
   await chrome.storage.local.remove(PENDING_WEB_CHECK_URLS_KEY);
 }
 
-chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName === "local" && changes[PENDING_WEB_CHECK_URLS_KEY]) {
-    importPendingWebCheckUrls();
-  }
-});
+// "storage" 権限の反映前（拡張機能の再読み込み前）は chrome.storage が未定義になり
+// 得るため、ここが無くても他の初期化処理を止めないようガードする。
+if (chrome.storage) {
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === "local" && changes[PENDING_WEB_CHECK_URLS_KEY]) {
+      importPendingWebCheckUrls();
+    }
+  });
+} else {
+  console.warn("chrome.storage が利用できません。拡張機能を再読み込みしてください。");
+}
 
 openWebUrlsBtn.addEventListener("click", () => {
   const lines = webCheckUrlsEl.value
