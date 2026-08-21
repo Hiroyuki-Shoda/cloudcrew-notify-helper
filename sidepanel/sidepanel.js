@@ -6,6 +6,7 @@ const copyMentionBtn = document.getElementById("copy-mention-btn");
 const webCheckUrlsEl = document.getElementById("web-check-urls");
 const webCheckStatusEl = document.getElementById("web-check-status");
 const openWebUrlsBtn = document.getElementById("open-web-urls-btn");
+const clearWebUrlsBtn = document.getElementById("clear-web-urls-btn");
 
 const targetHostEl = document.getElementById("target-host");
 const customInstructionSelect = document.getElementById("custom-instruction-select");
@@ -102,6 +103,11 @@ openWebUrlsBtn.addEventListener("click", () => {
   }
 
   webCheckStatusEl.textContent = hasInvalid ? "URL形式が不正です" : "";
+});
+
+clearWebUrlsBtn.addEventListener("click", () => {
+  webCheckUrlsEl.value = "";
+  webCheckStatusEl.textContent = "";
 });
 
 // ---------- ⑤⑥ → ⑦ 有効化制御 ----------
