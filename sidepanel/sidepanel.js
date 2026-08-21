@@ -83,13 +83,21 @@ openWebUrlsBtn.addEventListener("click", () => {
 
   let hasInvalid = false;
   for (const line of lines) {
-    // Backlog等からのコピーで行末にTAB区切りの余分な列（ステータス名など）が
-    // 付いてくることがあるため、先頭の空白区切りトークンのみをURLとして扱う。
-    const candidate = line.split(/\s+/)[0];
-    if (isValidHttpUrl(candidate)) {
-      window.open(candidate, "_blank");
-    } else {
+    // Backlogのドラッグ選択コピーでは、1行に複数のURLがスペース区切りで
+    // 並んだり、末尾にTAB区切りの余分な列（ステータス名など）が付くことが
+    // ある。行内の空白区切りトークンのうちURLとして認識できたものは全て開き、
+    // 認識できないトークン（余分な列など）だけを無視する。1つも認識できな
+    // かった行のみ不正として扱う。
+    const tokens = line.split(/\s+/).filter((token) => token.length > 0);
+    const validUrls = tokens.filter(isValidHttpUrl);
+
+    if (validUrls.length === 0) {
       hasInvalid = true;
+      continue;
+    }
+
+    for (const url of validUrls) {
+      window.open(url, "_blank");
     }
   }
 
