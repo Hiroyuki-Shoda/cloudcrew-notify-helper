@@ -83,8 +83,11 @@ openWebUrlsBtn.addEventListener("click", () => {
 
   let hasInvalid = false;
   for (const line of lines) {
-    if (isValidHttpUrl(line)) {
-      window.open(line, "_blank");
+    // Backlog等からのコピーで行末にTAB区切りの余分な列（ステータス名など）が
+    // 付いてくることがあるため、先頭の空白区切りトークンのみをURLとして扱う。
+    const candidate = line.split(/\s+/)[0];
+    if (isValidHttpUrl(candidate)) {
+      window.open(candidate, "_blank");
     } else {
       hasInvalid = true;
     }
