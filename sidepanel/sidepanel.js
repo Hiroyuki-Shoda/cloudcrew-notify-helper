@@ -37,6 +37,10 @@ copyMentionBtn.addEventListener("click", async () => {
 const PENDING_WEB_CHECK_URLS_KEY = "pendingWebCheckUrls";
 
 function isValidHttpUrl(text) {
+  // URL コンストラクタは改行やタブ等の制御文字を解析前に取り除いてしまうため、
+  // 複数行/複数URLが混ざった文字列を1件の正しいURLと誤判定することがある。
+  // 空白・制御文字を含む時点で単一のURLとは認めない。
+  if (/\s/.test(text)) return false;
   try {
     const url = new URL(text);
     return url.protocol === "http:" || url.protocol === "https:";
