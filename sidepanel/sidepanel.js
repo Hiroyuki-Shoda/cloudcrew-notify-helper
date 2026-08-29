@@ -24,7 +24,7 @@ function getSelectedRadioValue(name) {
 
 function updateMentionText() {
   const mentionType = getSelectedRadioValue("mention-type");
-  mentionTextEl.value = `${mentionType}\n確認いたします。`;
+  mentionTextEl.value = mentionType === "メンションなし" ? "確認いたします。" : `${mentionType}\n確認いたします。`;
 }
 
 document.getElementById("mention-type-group").addEventListener("change", updateMentionText);
